@@ -2,6 +2,7 @@ package com.driver.services.impl;
 
 import com.driver.model.Admin;
 import com.driver.model.Country;
+import com.driver.model.CountryName;
 import com.driver.model.ServiceProvider;
 import com.driver.repository.AdminRepository;
 import com.driver.repository.CountryRepository;
@@ -10,6 +11,7 @@ import com.driver.services.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,32 +41,34 @@ public class AdminServiceImpl implements AdminService {
         Admin admin = adminRepository1.findById(adminId).get() ;
 
         //get service provider by name
-        ServiceProvider serviceProvider = serviceProviderRepository1.findByName(providerName) ;
+        ServiceProvider serviceProvider = new ServiceProvider(providerName,admin);
 
         //get list of service provider from admin
-        List<ServiceProvider> serviceProviderList = admin.getServiceProviderList() ;
-
-        //add the serviceProvider to current list
-        serviceProviderList.add(serviceProvider) ;
-
-        //set the list and save in the repo then return admin obj
+        List<ServiceProvider> serviceProviderList = admin.getServiceProviderList();
+        if (serviceProviderList == null) {
+            serviceProviderList = new ArrayList<ServiceProvider>();
+        }
+        serviceProviderList.add(serviceProvider);
         admin.setServiceProviderList(serviceProviderList);
-        adminRepository1.save(admin) ;
-
-        return admin ;
+        adminRepository1.save(admin);
+        return admin;
     }
 
     @Override
     public ServiceProvider addCountry(int serviceProviderId, String countryName) throws Exception{
 
-        ServiceProvider serviceProvider = serviceProviderRepository1.findById(serviceProviderId).get() ;
-
-        List<Country> countryList = serviceProvider.getCountryList() ;
-
-        Country country = new Country() ;
-        //country.setCountryName(countryName);
-
-        countryList.add(country) ;
-        return serviceProvider ;
+        if (CountryName.valueOf(countryName).toString() != countryName) throw new Exception("Country not found");
+        ServiceProvider serviceProvider = serviceProviderRepository1.findById(serviceProviderId).get();
+        if (serviceProvider == null) throw new Exception("Invalid serviceproviderId");
+        CountryName countryName1 = CountryName.valueOf(countryName);
+        Country country = new Country(countryName1, serviceProvider);
+        List<Country> countryList = serviceProvider.getCountryList();
+        if (countryList == null) {
+            countryList = new ArrayList<Country>();
+        }
+        countryList.add(country);
+        serviceProvider.setCountryList(countryList);
+        serviceProviderRepository1.save(serviceProvider);
+        return serviceProvider;
     }
 }
