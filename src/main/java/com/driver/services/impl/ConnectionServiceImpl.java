@@ -19,15 +19,13 @@ public class ConnectionServiceImpl implements ConnectionService {
     @Autowired
     ConnectionRepository connectionRepository2;
 
-    @Override
-    public User connect(int userId, String countryName) throws Exception
-    {
+    public User connect(int userId, String countryName) throws Exception{
 
         User user = userRepository2.findById(userId).get();
-        if(user.getMaskedIP()!=null){
+        if(user.getMaskedIp()!=null){
             throw new Exception("Already connected");
         }
-        else if(countryName.equalsIgnoreCase(user.getCountry().getCountryName().toString())){
+        else if(countryName.equalsIgnoreCase(user.getOriginalCountry().getCountryName().toString())){
             return user;
         }
         else {
@@ -58,11 +56,11 @@ public class ConnectionServiceImpl implements ConnectionService {
                 connection.setUser(user);
                 connection.setServiceProvider(serviceProvider);
 
-                String cc = country.getCodes();
+                String cc = country.getCode();
                 int givenId = serviceProvider.getId();
                 String mask = cc+"."+givenId+"."+userId;
 
-                user.setMaskedIP(mask);
+                user.setMaskedIp(mask);
                 user.setConnected(true);
                 user.getConnectionList().add(connection);
 
@@ -75,33 +73,28 @@ public class ConnectionServiceImpl implements ConnectionService {
             }
         }
         return user;
-
     }
     @Override
-    public User disconnect(int userId) throws Exception
-    {
-        User user = userRepository2.findById(userId).get() ;
-        boolean check = user.isConnected() ;
-        if(!check){
-            throw new Exception("Already disconnected") ;
+    public User disconnect(int userId) throws Exception {
+        User user = userRepository2.findById(userId).get();
+        if(user.getConnected()==false){
+            throw new Exception("Already disconnected");
         }
+        user.setMaskedIp(null);
         user.setConnected(false);
-        user.setMaskedIP(null);
-        user = userRepository2.save(user) ;
-
-        return user ;
+        userRepository2.save(user);
+        return user;
     }
     @Override
     public User communicate(int senderId, int receiverId) throws Exception {
-
         User user = userRepository2.findById(senderId).get();
         User user1 = userRepository2.findById(receiverId).get();
 
-        if(user1.getMaskedIP()!=null){
-            String str = user1.getMaskedIP();
+        if(user1.getMaskedIp()!=null){
+            String str = user1.getMaskedIp();
             String cc = str.substring(0,3); //chopping country code = cc
 
-            if(cc.equals(user.getCountry().getCodes()))
+            if(cc.equals(user.getOriginalCountry().getCode()))
                 return user;
             else {
                 String countryName = "";
@@ -118,7 +111,7 @@ public class ConnectionServiceImpl implements ConnectionService {
                     countryName = CountryName.AUS.toString();
 
                 User user2 = connect(senderId,countryName);
-                if (!user2.isConnected()){
+                if (!user2.getConnected()){
                     throw new Exception("Cannot establish communication");
 
                 }
@@ -127,12 +120,12 @@ public class ConnectionServiceImpl implements ConnectionService {
 
         }
         else{
-            if(user1.getCountry().equals(user.getCountry())){
+            if(user1.getOriginalCountry().equals(user.getOriginalCountry())){
                 return user;
             }
-            String countryName = user1.getCountry().getCountryName().toString();
+            String countryName = user1.getOriginalCountry().getCountryName().toString();
             User user2 =  connect(senderId,countryName);
-            if (!user2.isConnected()){
+            if (!user2.getConnected()){
                 throw new Exception("Cannot establish communication");
             }
             else return user2;

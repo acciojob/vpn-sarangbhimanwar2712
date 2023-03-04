@@ -24,36 +24,61 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User register(String username, String password, String countryName) throws Exception {
+
         User user = new User();
-        Country country = countryRepository3.findByName(countryName) ;
+        if(countryName.equalsIgnoreCase("IND") || countryName.equalsIgnoreCase("USA")|| countryName.equalsIgnoreCase("JPN")|| countryName.equalsIgnoreCase("AUS")|| countryName.equalsIgnoreCase("CHI")){
+            user.setUsername(username);
+            user.setPassword(password);
 
-        String originalIp = country.getCodes() + String.valueOf(user.getId());
+            Country country = new Country(); //linking
+            if(countryName.equalsIgnoreCase("IND")){
+                country.setCountryName(CountryName.IND);
+                country.setCode(CountryName.IND.toCode());
+            }
+            if(countryName.equalsIgnoreCase("USA")){
+                country.setCountryName(CountryName.USA);
+                country.setCode(CountryName.USA.toCode());
+            }
+            if(countryName.equalsIgnoreCase("JPN")){
+                country.setCountryName(CountryName.JPN);
+                country.setCode(CountryName.JPN.toCode());
+            }
+            if(countryName.equalsIgnoreCase("CHI")){
+                country.setCountryName(CountryName.CHI);
+                country.setCode(CountryName.CHI.toCode());
+            }
+            if(countryName.equalsIgnoreCase("AUA")){
+                country.setCountryName(CountryName.AUS);
+                country.setCode(CountryName.AUS.toCode());
+            }
 
-        //Setting attributes
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setOriginalIP(originalIp);
-        user.setMaskedIP(null);
-        user.setConnected(false);
+            country.setUser(user); //reverse linking
+            user.setOriginalCountry(country);
+            user.setConnected(false); //vpn main goal
 
-        //Setting foreign attributes
-        user.setCountry(country);
-        user = userRepository3.save(user) ;
+            String code = country.getCode()+"."+userRepository3.save(user).getId();
+            user.setOriginalIp(code); //new
 
-        return user ;
+            userRepository3.save(user);
+
+
+        }
+        else{  //means user is null
+            throw new Exception("Country not found");
+        }
+        return user;
     }
 
     @Override
     public User subscribe(Integer userId, Integer serviceProviderId) {
 
-        User user = userRepository3.findById(userId).get() ;
-        ServiceProvider serviceProvider = serviceProviderRepository3.findById(serviceProviderId).get() ;
+        User user = userRepository3.findById(userId).get();
+        ServiceProvider serviceProvider = serviceProviderRepository3.findById(serviceProviderId).get();
 
-        List<ServiceProvider> list = user.getServiceProviderList() ;
-        list.add(serviceProvider) ;
+        user.getServiceProviderList().add(serviceProvider);
+        serviceProvider.getUsers().add(user);
 
-        user.setServiceProviderList(list);
-        user = userRepository3.save(user) ;
-        return user ;
+        serviceProviderRepository3.save(serviceProvider);
+        return user;
     }
 }
