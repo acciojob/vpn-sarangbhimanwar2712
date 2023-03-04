@@ -12,22 +12,19 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class Country {
+public class Connection {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id ;
 
-    private CountryName countryName ;
-    private String codes ;
-
-    //1. Country is child wrt ServiceProvider
+    //1. Connection is  child wrt ServiceProvider
     @ManyToOne
     @JoinColumn
     private ServiceProvider serviceProvider ;
 
-    //2. Country is child wrt to user
-    @OneToOne
+    //2. Connection is child wrt User
+    @ManyToOne
     @JoinColumn
     private User user ;
-
 }
