@@ -26,10 +26,7 @@ public class Country {
     public Country() {
     }
 
-    public Country(CountryName countryName, ServiceProvider serviceProvider) {
-        this.countryName = countryName;
-        this.serviceProvider = serviceProvider;
-    }
+
 
     public int getId() {
         return id;
